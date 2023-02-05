@@ -1,10 +1,7 @@
-import 'dart:async';
 
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:clockee/stores/observable_alarm/observable_alarm.dart';
 import 'package:clockee/screens/main/main_screen.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
 import 'constants/theme_data.dart';
 import 'enums.dart';
@@ -40,7 +37,7 @@ void main() async {
   list.alarms.forEach((alarm) {
     alarm.loadTracks();
   });
-  WidgetsBinding.instance!.addObserver(LifeCycleListener(list));
+  WidgetsBinding.instance.addObserver(LifeCycleListener(list));
 
   await AndroidAlarmManager.initialize();
 

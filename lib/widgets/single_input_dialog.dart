@@ -1,7 +1,6 @@
 import 'package:clockee/utils/widget_helper.dart';
 import 'package:clockee/widgets/dialog_container/dialog_container.dart';
 import 'package:clockee/widgets/simple_button.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 
 class SingleInputDialog extends StatelessWidget {

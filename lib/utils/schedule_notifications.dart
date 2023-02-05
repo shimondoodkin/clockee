@@ -1,13 +1,13 @@
 import 'dart:async' show Future;
 import 'dart:math' show Random;
 import 'dart:typed_data' show Int64List;
-import 'dart:ui' show Color;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 //
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 /// Export those classes the user is likely to use and pass in.
 export 'package:flutter_local_notifications/flutter_local_notifications.dart'
     show
@@ -26,8 +26,8 @@ export 'package:flutter_local_notifications/flutter_local_notifications.dart'
         Importance,
         InitializationSettings,
         InboxStyleInformation,
-        IOSNotificationDetails,
-        IOSNotificationAttachment,
+        DarwinNotificationDetails,
+        DarwinNotificationAttachment,
         MediaStyleInformation,
         NotificationAppLaunchDetails,
         NotificationDetails,
@@ -36,7 +36,6 @@ export 'package:flutter_local_notifications/flutter_local_notifications.dart'
         Priority,
         RawResourceAndroidNotificationSound,
         RepeatInterval,
-        SelectNotificationCallback,
         Time;
 
 export 'dart:typed_data' show Int64List;
@@ -69,7 +68,7 @@ class ScheduleNotifications with HandleError {
     bool? autoCancel,
     bool? ongoing,
     Color? color,
-    AndroidBitmap? largeIcon,
+    AndroidBitmap<Object>? largeIcon,
     bool? onlyAlertOnce,
     bool? showWhen,
     bool? channelShowBadge,
@@ -86,7 +85,8 @@ class ScheduleNotifications with HandleError {
     NotificationVisibility? visibility,
     int? timeoutAfter,
     String? category,
-    SelectNotificationCallback? onSelectNotification,
+    void Function(NotificationResponse)? onDidReceiveBackgroundNotificationResponse,
+    void Function(int, String?, String?, String?)? onDidReceiveNotificationResponse,
     bool? requestAlertPermission,
     bool? requestSoundPermission,
     bool? requestBadgePermission,
@@ -99,14 +99,16 @@ class ScheduleNotifications with HandleError {
     bool? presentBadge,
     String? soundFile,
     int? badgeNumber,
-    List<IOSNotificationAttachment>? attachments,
+    List<DarwinNotificationAttachment>? attachments,
   }) {
+    tz.initializeTimeZones();
     if (appIcon == null || appIcon.trim().isEmpty) {
       // Assign the app's icon.
       _appIcon = '@mipmap/ic_launcher';
     } else {
       _appIcon = appIcon.trim();
     }
+
     // Take in parameter values into private variables.
     _schedule = schedule;
     _title = title ?? '';
@@ -145,14 +147,14 @@ class ScheduleNotifications with HandleError {
     _visibility = visibility ?? NotificationVisibility.private;
     _timeoutAfter = timeoutAfter;
     _category = category;
-    _selectNotificationCallback = onSelectNotification;
+    _onDidReceiveBackgroundNotificationResponse = onDidReceiveBackgroundNotificationResponse;
+    _onDidReceiveLocalNotification = onDidReceiveLocalNotification;
     _requestAlertPermission = requestAlertPermission ?? true;
     _requestSoundPermission = requestSoundPermission ?? true;
     _requestBadgePermission = requestBadgePermission ?? true;
     _defaultPresentAlert = defaultPresentAlert ?? true;
     _defaultPresentSound = defaultPresentSound ?? true;
     _defaultPresentBadge = defaultPresentBadge ?? true;
-    _onDidReceiveLocalNotification = onDidReceiveLocalNotification;
     _presentAlert = presentAlert ?? true;
     _presentSound = presentSound ?? true;
     _presentBadge = presentBadge ?? true;
@@ -195,7 +197,7 @@ class ScheduleNotifications with HandleError {
   bool? _autoCancel;
   bool? _ongoing;
   Color? _color;
-  AndroidBitmap? _largeIcon;
+  AndroidBitmap<Object>? _largeIcon;
   bool? _onlyAlertOnce;
   bool? _showWhen;
   bool? _channelShowBadge;
@@ -212,20 +214,21 @@ class ScheduleNotifications with HandleError {
   NotificationVisibility? _visibility;
   int? _timeoutAfter;
   String? _category;
-  SelectNotificationCallback? _selectNotificationCallback;
+  DidReceiveBackgroundNotificationResponseCallback? _onDidReceiveBackgroundNotificationResponse;
+  DidReceiveLocalNotificationCallback? _onDidReceiveLocalNotification;
+
   bool? _requestAlertPermission;
   bool? _requestSoundPermission;
   bool? _requestBadgePermission;
   bool? _defaultPresentAlert;
   bool? _defaultPresentSound;
   bool? _defaultPresentBadge;
-  DidReceiveLocalNotificationCallback? _onDidReceiveLocalNotification;
   bool? _presentAlert;
   bool? _presentSound;
   bool? _presentBadge;
   String? _soundFile;
   int? _badgeNumber;
-  List<IOSNotificationAttachment>? _attachments;
+  List<DarwinNotificationAttachment>? _attachments;
 
   @mustCallSuper
   Future<bool> init({
@@ -249,7 +252,7 @@ class ScheduleNotifications with HandleError {
     bool? autoCancel,
     bool? ongoing,
     Color? color,
-    AndroidBitmap? largeIcon,
+    AndroidBitmap<Object>? largeIcon,
     bool? onlyAlertOnce,
     bool? showWhen,
     bool? channelShowBadge,
@@ -266,20 +269,20 @@ class ScheduleNotifications with HandleError {
     NotificationVisibility? visibility,
     int? timeoutAfter,
     String? category,
-    SelectNotificationCallback? onSelectNotification,
     bool? requestAlertPermission,
     bool? requestSoundPermission,
     bool? requestBadgePermission,
     bool? defaultPresentAlert,
     bool? defaultPresentSound,
     bool? defaultPresentBadge,
+    DidReceiveBackgroundNotificationResponseCallback? onDidReceiveBackgroundNotificationResponse,
     DidReceiveLocalNotificationCallback? onDidReceiveLocalNotification,
     bool? presentAlert,
     bool? presentSound,
     bool? presentBadge,
     String? soundFile,
     int? badgeNumber,
-    List<IOSNotificationAttachment>? attachments,
+    List<DarwinNotificationAttachment>? attachments,
   }) async {
     // No need to continue.
     if (_init) return _init;
@@ -324,13 +327,13 @@ class ScheduleNotifications with HandleError {
     if (visibility != null) _visibility = visibility;
     if (timeoutAfter != null) _timeoutAfter = timeoutAfter;
     if (category != null) _category = category;
-    onSelectNotification ??= _selectNotificationCallback;
     requestAlertPermission ??= _requestAlertPermission;
     requestSoundPermission ??= _requestSoundPermission;
     requestBadgePermission ??= _requestBadgePermission;
     defaultPresentAlert ??= _defaultPresentAlert;
     defaultPresentSound ??= _defaultPresentSound;
     defaultPresentBadge ??= _defaultPresentBadge;
+    onDidReceiveBackgroundNotificationResponse ??= _onDidReceiveBackgroundNotificationResponse;
     onDidReceiveLocalNotification ??= _onDidReceiveLocalNotification;
     if (presentAlert != null) _presentAlert = presentAlert;
     if (presentSound != null) _presentSound = presentSound;
@@ -342,28 +345,44 @@ class ScheduleNotifications with HandleError {
     //
     try {
       // Note: permissions aren't requested here just to demonstrate that can be done later using the `requestPermissions()` method
-      // of the `IOSFlutterLocalNotificationsPlugin` class
-      var initializationSettingsIOS = IOSInitializationSettings(
+      // of the `DarwinFlutterLocalNotificationsPlugin` class
+      var initializationSettingsDarwin = DarwinInitializationSettings(
         requestAlertPermission: requestAlertPermission ?? true,
         requestBadgePermission: requestSoundPermission ?? true,
         requestSoundPermission: requestBadgePermission ?? true,
         defaultPresentAlert: _defaultPresentAlert ?? true,
         defaultPresentSound: defaultPresentSound ?? true,
         defaultPresentBadge: defaultPresentBadge ?? true,
-        onDidReceiveLocalNotification: onDidReceiveLocalNotification ??
-            (int? id, String? title, String? body, String? payload) =>
-                onSelectNotification!(payload),
+        onDidReceiveLocalNotification: onDidReceiveLocalNotification ,
       );
 
       var initializationSettings = InitializationSettings(
           android: AndroidInitializationSettings(_appIcon ?? ""),
-          iOS: initializationSettingsIOS);
+          iOS: initializationSettingsDarwin,macOS: initializationSettingsDarwin);
 
       _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
       _init = (await _flutterLocalNotificationsPlugin!.initialize(
           initializationSettings,
-          onSelectNotification: onSelectNotification))!;
+          onDidReceiveBackgroundNotificationResponse: onDidReceiveBackgroundNotificationResponse,
+        onDidReceiveNotificationResponse: (details) =>
+        // NotificationResponse details:
+        //   final int? id;  // The notification's id. This is nullable as support for this only supported for notifications created using version 10 or newer of this plugin.
+        //   final String? actionId;   // The id of the action that was triggered.
+        //   final String? input;  // The value of the input field if the notification action had an input field.
+        //   final String? payload; // The notification's payload.
+        //   final NotificationResponseType notificationResponseType; // The notification response type.
+
+        // enum NotificationResponseType {
+        //   selectedNotification,  // Indicates that a user has selected a notification.
+        //   selectedNotificationAction, // Indicates the a user has selected a notification action.
+        // }
+
+        //  onDidReceiveLocalNotification(id, String? title, String? body, String? payload)
+
+        onDidReceiveLocalNotification!(details.id??0, null, null, details.payload)
+
+      ))!;
     } catch (ex) {
       getError(ex);
       _init = false;
@@ -379,7 +398,7 @@ class ScheduleNotifications with HandleError {
 
   /// Returns the underlying platform-specific implementation of given type [T], which
   /// must be a concrete subclass of [FlutterLocalNotificationsPlatform](https://pub.dev/documentation/flutter_local_notifications_platform_interface/latest/flutter_local_notifications_platform_interface/FlutterLocalNotificationsPlatform-class.html).
-  Future<bool> resolveIOSImplementation({
+  Future<bool> resolveDarwinImplementation({
     bool? alert = true,
     bool? badge = true,
     bool? sound = true,
@@ -388,6 +407,7 @@ class ScheduleNotifications with HandleError {
     if (!_init) return false;
     var implementation;
     try {
+
       implementation = _flutterLocalNotificationsPlugin
           ?.resolvePlatformSpecificImplementation<
               IOSFlutterLocalNotificationsPlugin>();
@@ -432,7 +452,7 @@ class ScheduleNotifications with HandleError {
     bool? autoCancel,
     bool? ongoing,
     Color? color,
-    AndroidBitmap? largeIcon,
+    AndroidBitmap<Object>? largeIcon,
     bool? onlyAlertOnce,
     bool? showWhen,
     bool? channelShowBadge,
@@ -454,7 +474,7 @@ class ScheduleNotifications with HandleError {
     bool? presentBadge,
     String? soundFile,
     int? badgeNumber,
-    List<IOSNotificationAttachment>? attachments,
+    List<DarwinNotificationAttachment>? attachments,
   }) {
     //
     var notificationSpecifics = _notificationDetails(
@@ -531,6 +551,7 @@ class ScheduleNotifications with HandleError {
     String? body,
     String? payload,
     bool? androidAllowWhileIdle,
+    UILocalNotificationDateInterpretation? uiLocalNotificationDateInterpretation,
     String? icon,
     Importance? importance,
     Priority? priority,
@@ -545,7 +566,7 @@ class ScheduleNotifications with HandleError {
     bool? autoCancel,
     bool? ongoing,
     Color? color,
-    AndroidBitmap? largeIcon,
+    AndroidBitmap<Object>? largeIcon,
     bool? onlyAlertOnce,
     bool? showWhen,
     bool? channelShowBadge,
@@ -567,7 +588,7 @@ class ScheduleNotifications with HandleError {
     bool? presentBadge,
     String? soundFile,
     int? badgeNumber,
-    List<IOSNotificationAttachment>? attachments,
+    List<DarwinNotificationAttachment>? attachments,
   }) {
     // Too late!
     if (schedule == null || DateTime.now().isAfter(schedule)) return -1;
@@ -624,14 +645,17 @@ class ScheduleNotifications with HandleError {
 
       try {
         //
-        _flutterLocalNotificationsPlugin!.schedule(
+
+
+        _flutterLocalNotificationsPlugin!.zonedSchedule(
           id,
           title,
           body,
-          schedule,
+          tz.TZDateTime.from(schedule, tz.local),
           notificationSpecifics,
           payload: payload,
           androidAllowWhileIdle: androidAllowWhileIdle ?? false,
+          uiLocalNotificationDateInterpretation: uiLocalNotificationDateInterpretation ?? UILocalNotificationDateInterpretation.wallClockTime,
         );
       } catch (ex) {
         id = -1;
@@ -662,7 +686,7 @@ class ScheduleNotifications with HandleError {
     bool? autoCancel,
     bool? ongoing,
     Color? color,
-    AndroidBitmap? largeIcon,
+    AndroidBitmap<Object>? largeIcon,
     bool? onlyAlertOnce,
     bool? showWhen,
     bool? channelShowBadge,
@@ -684,7 +708,7 @@ class ScheduleNotifications with HandleError {
     bool? presentBadge,
     String? soundFile,
     int? badgeNumber,
-    List<IOSNotificationAttachment>? attachments,
+    List<DarwinNotificationAttachment>? attachments,
   }) {
     //
     var notificationSpecifics = _notificationDetails(
@@ -776,7 +800,7 @@ class ScheduleNotifications with HandleError {
     bool? autoCancel,
     bool? ongoing,
     Color? color,
-    AndroidBitmap? largeIcon,
+    AndroidBitmap<Object>? largeIcon,
     bool? onlyAlertOnce,
     bool? showWhen,
     bool? channelShowBadge,
@@ -798,7 +822,7 @@ class ScheduleNotifications with HandleError {
     bool? presentBadge,
     String? soundFile,
     int? badgeNumber,
-    List<IOSNotificationAttachment>? attachments,
+    List<DarwinNotificationAttachment>? attachments,
   }) {
     //
     var notificationSpecifics = _notificationDetails(
@@ -852,13 +876,27 @@ class ScheduleNotifications with HandleError {
       try {
         //
         if (id == null || id < 0) id = Random().nextInt(999);
-
-        _flutterLocalNotificationsPlugin!.showDailyAtTime(
+        // _flutterLocalNotificationsPlugin!.showDailyAtTime(
+        //   id,
+        //   title,
+        //   body,
+        //   notificationTime,
+        //   notificationSpecifics,
+        //   payload: payload,
+        // );
+        _flutterLocalNotificationsPlugin!.zonedSchedule(
           id,
           title,
           body,
-          notificationTime,
+          tz.TZDateTime.from(DateTime.now().copyWith(
+              hour: notificationTime.hour,
+              minute: notificationTime.minute,
+              second: notificationTime.second
+          ), tz.local),
           notificationSpecifics,
+          androidAllowWhileIdle: androidAllowWhileIdle??true,
+          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.wallClockTime,
+          matchDateTimeComponents:DateTimeComponents.time,
           payload: payload,
         );
       } catch (ex) {
@@ -891,7 +929,7 @@ class ScheduleNotifications with HandleError {
     bool? autoCancel,
     bool? ongoing,
     Color? color,
-    AndroidBitmap? largeIcon,
+    AndroidBitmap<Object>? largeIcon,
     bool? onlyAlertOnce,
     bool? showWhen,
     bool? channelShowBadge,
@@ -913,7 +951,7 @@ class ScheduleNotifications with HandleError {
     bool? presentBadge,
     String? soundFile,
     int? badgeNumber,
-    List<IOSNotificationAttachment>? attachments,
+    List<DarwinNotificationAttachment>? attachments,
   }) {
     //
     var notificationSpecifics = _notificationDetails(
@@ -968,15 +1006,32 @@ class ScheduleNotifications with HandleError {
         //
         if (id == null || id < 0) id = Random().nextInt(999);
 
-        _flutterLocalNotificationsPlugin!.showWeeklyAtDayAndTime(
+        _flutterLocalNotificationsPlugin!.zonedSchedule(
           id,
           title,
           body,
-          day,
-          notificationTime,
+          tz.TZDateTime.from(DateTime.now().copyWith(
+              day: DateTime.now().day + (day.value - DateTime.now().weekday),
+              hour: notificationTime.hour,
+              minute: notificationTime.minute,
+              second: notificationTime.second
+          ), tz.local),
           notificationSpecifics,
+          androidAllowWhileIdle: androidAllowWhileIdle??true,
+          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.wallClockTime,
+          matchDateTimeComponents:DateTimeComponents.dayOfWeekAndTime,
           payload: payload,
         );
+        //
+        // _flutterLocalNotificationsPlugin!.showWeeklyAtDayAndTime(
+        //   id,
+        //   title,
+        //   body,
+        //   day,
+        //   notificationTime,
+        //   notificationSpecifics,
+        //   payload: payload,
+        // );
       } catch (ex) {
         id = -1;
         getError(ex);
@@ -1004,7 +1059,7 @@ class ScheduleNotifications with HandleError {
     bool? autoCancel,
     bool? ongoing,
     Color? color,
-    AndroidBitmap? largeIcon,
+    AndroidBitmap<Object>? largeIcon,
     bool? onlyAlertOnce,
     bool? showWhen,
     bool? channelShowBadge,
@@ -1026,10 +1081,10 @@ class ScheduleNotifications with HandleError {
     bool? presentBadge,
     String? soundFile,
     int? badgeNumber,
-    List<IOSNotificationAttachment>? attachments,
+    List<DarwinNotificationAttachment>? attachments,
   ) {
     //
-    NotificationDetails? notificationSpecifics = null;
+    NotificationDetails? notificationSpecifics;
 
     // Failed to initialized.
     if (!_init) {
@@ -1098,14 +1153,14 @@ class ScheduleNotifications with HandleError {
     }
 
     AndroidNotificationDetails androidSettings;
-    IOSNotificationDetails iOSSettings;
+    DarwinNotificationDetails darwinSettings;
 
     try {
       androidSettings = AndroidNotificationDetails(
         channelId ?? "",
         channelName ?? "",
-        channelDescription ?? "",
         icon: icon,
+        channelDescription:channelDescription ?? "",
         importance: importance ?? Importance.defaultImportance,
         priority: priority ?? Priority.defaultPriority,
         styleInformation: styleInformation,
@@ -1136,7 +1191,7 @@ class ScheduleNotifications with HandleError {
         ticker: ticker,
         visibility: visibility,
         timeoutAfter: timeoutAfter,
-        category: category,
+        category: AndroidNotificationCategory(category ?? ""),
       );
     } catch (ex) {
       getError(ex);
@@ -1144,7 +1199,7 @@ class ScheduleNotifications with HandleError {
     }
 
     try {
-      iOSSettings = IOSNotificationDetails(
+      darwinSettings = DarwinNotificationDetails(
         presentAlert: presentAlert,
         presentSound: presentSound,
         presentBadge: presentBadge,
@@ -1154,7 +1209,7 @@ class ScheduleNotifications with HandleError {
       );
 
       notificationSpecifics =
-          NotificationDetails(android: androidSettings, iOS: iOSSettings);
+          NotificationDetails(android: androidSettings, iOS: darwinSettings, macOS: darwinSettings);
     } catch (ex) {
       notificationSpecifics = null;
       getError(ex);

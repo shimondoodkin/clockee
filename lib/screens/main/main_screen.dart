@@ -5,7 +5,6 @@ import 'package:clockee/screens/main/alarm_list_screen.dart';
 import 'package:clockee/stores/alarm_list/alarm_list.dart';
 // import 'package:clockee/views/alarm_page.dart';
 import 'package:clockee/screens/main/clock_screen.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 // import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -36,7 +35,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setEnabledSystemUIOverlays([]); // fullscreen
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []); // fullscreen
     return Scaffold(
       // backgroundColor: CustomColors.pageBackgroundColor,
       body: Column(
@@ -82,17 +81,19 @@ class _MainScreenState extends State<MainScreen> {
       builder: (BuildContext context, MenuInfo value, Widget? child) {
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: 16.0),
-          child: FlatButton(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(32),
-                    topLeft: Radius.circular(32))),
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
-            color: currentMenuInfo.menuType == value.menuType
-                ? NeumorphicTheme.isUsingDark(context)
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: currentMenuInfo.menuType == value.menuType
+                    ? NeumorphicTheme.isUsingDark(context)
                     ? Colors.black87
                     : Colors.white70
-                : Colors.transparent,
+                    : Colors.transparent,
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(32),
+                        topLeft: Radius.circular(32)))
+            ),
             onPressed: () {
               var menuInfo = Provider.of<MenuInfo>(context, listen: false);
               menuInfo.updateMenu(currentMenuInfo);

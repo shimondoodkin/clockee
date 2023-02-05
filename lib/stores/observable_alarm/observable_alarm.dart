@@ -111,7 +111,7 @@ abstract class ObservableAlarmBase with Store {
   List<String>? musicPaths;
 
   @observable
-  @JsonKey(ignore: true)
+  @JsonKey(includeToJson: true)
   ObservableList<SongInfo> trackInfo = ObservableList();
 
   ObservableAlarmBase({
@@ -148,6 +148,7 @@ abstract class ObservableAlarmBase with Store {
     // https://github.com/dart-lang/sdk/issues/42947
     try {
       // To prevent duplicate entries... We check if an item already exist
+      // ignore: unused_local_variable
       var existingItem =
           trackInfo.firstWhere((element) => element.filePath == info.filePath);
       //...Fuck yeah it does if it passes through.

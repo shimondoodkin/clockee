@@ -1,6 +1,5 @@
 import 'package:clockee/constants/theme_data.dart';
 import 'package:clockee/utils/widget_helper.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 
 class SimpleButton extends StatefulWidget {

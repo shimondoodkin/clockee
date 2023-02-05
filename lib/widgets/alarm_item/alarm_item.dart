@@ -1,9 +1,7 @@
 import 'package:clockee/constants/theme_data.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:clockee/screens/edit_alarm/edit_alarm.dart';
 import 'package:clockee/services/alarm_list_manager.dart';
-import 'package:clockee/stores/alarm_list/alarm_list.dart';
 import 'package:clockee/stores/observable_alarm/observable_alarm.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 

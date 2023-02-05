@@ -1,5 +1,4 @@
 import 'package:clockee/enums.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class MenuInfo extends ChangeNotifier {

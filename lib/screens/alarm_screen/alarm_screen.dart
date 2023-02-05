@@ -1,4 +1,3 @@
-import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:clockee/constants/theme_data.dart';
 import 'package:clockee/services/alarm_scheduler.dart';
 import 'package:clockee/utils/widget_helper.dart';
@@ -19,7 +18,7 @@ class AlarmScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setEnabledSystemUIOverlays([]); // fullscreen
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []); // fullscreen
     final now = DateTime.now();
     final format = DateFormat('Hm');
     final snoozeTimes = [5, 10, 15, 20];

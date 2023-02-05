@@ -113,11 +113,10 @@ class AlarmScheduler {
     final hours = alarm.hour.toString().padLeft(2, '0');
     final minutes = alarm.minute.toString().padLeft(2, '0');
 
-    await notifications.init(onSelectNotification: (String? payload) async {
-      // if (payload == null || payload.trim().isEmpty) return null;
-      print('notification payload $payload');
-      throw Exception('New Notification');
-      // return;
+    await notifications.init(onDidReceiveLocalNotification: (id, title, body, payload) async {
+        // if (payload == null || payload.trim().isEmpty) return null;
+        print('notification payload $payload');
+        throw Exception('New Notification');
     });
 
     await notifications.getNotificationAppLaunchDetails().then((details) {

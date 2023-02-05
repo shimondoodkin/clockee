@@ -1,6 +1,5 @@
 import 'package:clockee/constants/theme_data.dart';
 import 'package:clockee/widgets/simple_button.dart';
-import 'package:flutter/material.dart';
 import 'package:clockee/widgets/dialog_container/dialog_container.dart';
 import 'package:clockee/screens/edit_alarm/components/edit_alarm_days.dart';
 import 'package:clockee/screens/edit_alarm/components/edit_alarm_head.dart';
